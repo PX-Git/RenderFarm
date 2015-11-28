@@ -4,7 +4,7 @@ import os
 import socket
 
 
-
+farmPreferenceLocation = "\\\\TITAN-PC\\_NetworkUtilities\\farmPreferences.py"
 
 
 
@@ -25,8 +25,8 @@ def renderFarmUI():
         
     window("RenderFarm_Window", w = widthVar, h = 300, s = True)
     
-    
-    
+    tabs = tabLayout(innerMarginWidth=100, innerMarginHeight=10 )
+    child1= columnLayout()
     mainColumn = columnLayout(columnAlign = 'center', w = 500)
     separator (style = 'none' ,h= 10)
     
@@ -82,7 +82,25 @@ def renderFarmUI():
     separator(h = 10)
     button(l = 'Refresh All',w =200, c = 'updateAllIpStatus()')
     button(l = "Send Job To Farm", w = 200, c ='sendToJobStack()')
+    
+    
+    setParent(tabs)
+    
+    
+    child2 = columnLayout() #Set File Paths
+    
+    rowColumnLayout(numberOfColumns = 2) 
+    
+    
+    #load in preferences? project based preferences?
+    text (l = "Log File Location:")
+    renderFarmUI.logFileLocation_ui = textField(w = 325,tx = "\\\\TITAN-PC\\Frames\\Logs")
+
+    
+    
+    tabLayout( tabs, edit=True, tabLabel=((child1, 'Generate Commands'), (child2, 'Set File Paths')), w = 275 ) ##Sets up and names tabs
     showWindow("RenderFarm_Window")
+    
 
 def browseForSceneLocation():  
     
@@ -248,9 +266,9 @@ def generateFrameSequences(availableMachines,startFrame,endFrame):
             
     return sequences
 
-def addToQueCommand( outputFramesLocation, renderEngine, startFrame, endFrame, priority, sceneLocation ):
+def addToQueCommand( outputFramesLocation, renderEngine, startFrame, endFrame, priority, logFileLocation ,sceneLocation ):
     
-    jobInfoDictionary = {'commandType':"addToQue", "outputFramesLocation":outputFramesLocation, 'startFrame':startFrame , "endFrame":endFrame,"renderEngine":renderEngine,"priority": priority, "sceneLocation":sceneLocation}
+    jobInfoDictionary = {'commandType':"addToQue", "outputFramesLocation":outputFramesLocation, 'startFrame':startFrame , "endFrame":endFrame,"renderEngine":renderEngine,"priority": priority,"logFileLocation":logFileLocation, "sceneLocation":sceneLocation}
     
     MESSAGE= str(jobInfoDictionary)
 
@@ -312,6 +330,7 @@ def sendToJobStack():
     endFrame = intField( renderFarmUI.endFrame, q = True, v = True)
     
     priority = intField( renderFarmUI.priority, q = True, v = True)
+    logLocation = textField(renderFarmUI.logFileLocation_ui, q = True, tx = True)
     
     availableMachines = []
     
@@ -334,7 +353,7 @@ def sendToJobStack():
 
         i+=1
 
-        MESSAGE = addToQueCommand( outputFramesLocation, renderEngine, startFrame, endFrame, priority, sceneLocation )
+        MESSAGE = addToQueCommand( outputFramesLocation, renderEngine, startFrame, endFrame, priority, logLocation, sceneLocation )
         sendMessage(id,port,MESSAGE)
     #send the evaluate farm command the render job sequences have been sent
     MESSAGE = evaluateFarmCommand()

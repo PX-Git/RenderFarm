@@ -45,7 +45,7 @@ import operator
 import ast
 import socket
 
-#import sqlite3   <-may use this as my data base if i can ge thte hang of it
+#import sqlite3   <-may use this as my data base if i can get the hang of it!
 
 
 
@@ -70,8 +70,8 @@ def interperateCommand(MESSAGE):
 def getStatus(ipAddress):
         #send a message asking for information
         #recieve a return message with status
-        
-        
+        #this command get the ip adress host name by the ip adress
+		hostName = socket.gethostbyaddr("10.0.0.15")[0]        
         status = "Ready"
         
         return status
@@ -79,35 +79,46 @@ def getStatus(ipAddress):
         
 def evaluateFarm():
         
-        '''This is the workhorse function of the jobmonitor script, it turns all of the wheels  
-        '''
+	'''This is the workhorse function of the jobmonitor script, it turns all of the wheels  
+	'''
 
-        #get the status of all machines on farm - including busy and available machines:
+	#get the status of all machines on farm - including busy and available machines:
 
-        for each in availableMachines:
-                getStatus()
+	for each in availableMachines:
+			getStatus()
 
 
-        #in the case of a job getting finished or chrashing etc, update the jobsBeingRendered que
+	#in the case of a job getting finished or chrashing etc, update the jobsBeingRendered que
 
-        #order the render que by the jobs priority
+	#order the render que by the jobs priority
 
-        #Sort the list of dictionaries by the key='priority':
+	#Sort the list of dictionaries by the key='priority':
 
-        list_of_dicts.sort(key=operator.itemgetter('priority')) 
-                
+	list_of_dicts.sort(key=operator.itemgetter('priority')) 
+			
 
-        #while there are jobs in the render que and the number of busy computers is less than the total amount of computers 
-        #keep sending jobs to render farm
-        while len(renderQue)>0 and len(busyMachines)<len(availableMachines):
+	#while there are jobs in the render que and the number of busy computers is less than the total amount of computers 
+	#keep sending jobs to render farm
+	while len(renderQue)>0 and len(busyMachines)<len(availableMachines):
 
-            print "i am in the render loop"
-            sendToFarm()
-            #update the lists
-            jobsBeingRendered.append(renderQue[0])
-            renderQue.remove()
+		print "i am in the render loop"
+		job = renderQue[0]
+		PID = sendCommandToFarm(availableMachines[0],port,MESSAGE) #get a call back message defining the PID
+		job["PID"] = PID
+		#update the lists
 
-def sendJob(id,port,MESSAGE):
+		
+		jobsBeingRendered.append(job)
+		renderQue.remove(renderQue[0])
+		
+		availableMachines.remove(availableMachines[0])
+		busyMachines.append(availableMachines)
+
+	
+	
+	print "Evaluate Farm Command Completed!"
+
+def sendCommandToFarm(id,port,MESSAGE):
     #print type(MESSAGE)    
     #print MESSAGE
 
@@ -119,6 +130,8 @@ def sendJob(id,port,MESSAGE):
     returnMessage = s.recv(1024)
     
     s.close()
+	PID = returnMessage
+	return PID
      
     
     print "server returned:", returnMessage

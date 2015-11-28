@@ -75,17 +75,6 @@ port = 5015
     
 def mainLoop():
 
-    #LISTEN:
-    MESSAGE = listen() #Runs until a command is recieved, returning the raw message
-
-    #INTERPERATE
-    commandType, messageContent = identifyCommand(MESSAGE) #converts the Message into a useable command
-                                                                #render 
-                                                                #kill
-                                                                #report
-
-    #EXECUTE #KILL or #REPORT
-
     '''
 
     Info  dictionary records the following:
@@ -98,24 +87,57 @@ def mainLoop():
     #Kill commands will return the string "Killed" or "Not Killed"?
 
     '''
-
-     #Exccutes one of the three commands based on command type
-
-    if commandType == "Render":
-        info = render(messageContent)
-
-    if commandType == "Kill":
-        info = kill(messageContent)
+    #LISTEN:
+	MESSAGE = listen(port)
+	#MESSAGE = "{'priority': 50, 'outputFramesLocation': u'\\\\TITAN-PC\\Frames\\TestImages', 'endFrame': 10, 'commandType': 'Render', 'sceneLocation': u'\\\\TITAN-PC\\_Projects\\TestProject_Batch\\scenes\\testScene_001.ma', 'startFrame': 6, 'renderEngine': 'vray'}"
 
 
-    if commandType == "Report":
-        info = generateReport(messageContent)
+	commandType = interperateCommand(MESSAGE)['commandType']
+	
+	print commandType
 
+	if commandType == 'Render':
+		job = interperateCommand(MESSAGE)
+		
+		
+		
+		break
+
+
+	if commandType == 'updateNodeAvailability':
+			
+		'''set a nodes availability '''
+
+
+		
+		break
+
+
+			
+	if commandType == 'Kill':
+		jobId = interperateCommand(MESSAGE)['id']
+		kill(jobId)
+		break
+
+	if commandType == 'Report':
+		print "report"
 
     sendToJobStack(info)
 
     
-def listen(port)
+def listenForCommands(port):
+
+	'''the render machine will need to:
+		
+		listen for a connection,
+		interperate the command,
+		execute some command
+		return a message 
+		
+		all while the socket is still open
+		
+		
+		'''
     #listen on designated port
     Adress=('',port)
     MaxClient=1
@@ -133,76 +155,115 @@ def listen(port)
         if not MESSAGE: break
 
         print "received data:", data
+		
+		interperateCommand(MESSAGE)
+		
+		
+	commandType = interperateCommand(MESSAGE)['commandType']
+	
+	print commandType
+
+	if commandType == 'Render':
+		job = interperateCommand(MESSAGE)
+		
+		
+
+
+	if commandType == 'updateNodeAvailability':
+			
+		'''set a nodes availability '''
+
+
+
+			
+	if commandType == 'Kill':
+		jobId = interperateCommand(MESSAGE)['id']
+		kill(jobId)
+		break
+
+	if commandType == 'Report':
+		print "report"		
+		
+		
+		
+		
+		
+		
+		
+		
+		
         clientSocket.send("receved the message!")  # echo
 
     clientSocket.close()
     return MESSAGE
-    
 
-def identifyCommand(MESSAGE)
-    '''This command will identify the string message as one of the following
-    
-    Render - flag flag info flag blah
-    Kill - pid
-    Report()
+def interperateCommand(MESSAGE):
+        '''interperate the string message as a dictionary
+        returns a dictionary
+        '''
 
-    then return the command type and the command
-    '''
-    commandType, command =  MESSAGE.split(" --> ")
-
-    return commandType, messageContent
+        
+        value = ast.literal_eval(MESSAGE)
+        return value
 
     
     
-def render( command ):
-    #receives batchRenderLocation, outputLocation, startFrame, endFrame, renderEngine, scene
+def render( batchRenderLocation, outputFramesLocation renderEngine startFrame endFrame,logFileDirectory,sceneLocation ):
+    #receives batchRenderLocation, outputLocation, startFrame, endFrame, renderEngine, sceneLocation
 
 
 
 
+	logFile = generateLog(logFileDirectory )
 
 
-batchRenderLocation = "C:\\Program Files\\Autodesk\\Maya2014\\bin\\Render.exe"
+	params = [batchRenderLocation]
+	params += ['-rd', outputFramesLocation]
+	params += ['-r', renderEngine]
+	params += ['-s', str(startFrame)]
+	params += ['-e', str(endFrame)]
+	params += ['-log',logFile]
+
+	params += [sceneLocation]
+	print params
 
 
-#search the log figure out what the currrent log number is and iterate by +1
-logID = "00001"
-logFileDirectory = "\\\\TITAN-PC\\Frames\\Logs\\"
-log = logFileDirectory + "RenderLog_" + str(logID) + ".txt"
-print logFile 
+	#-archive [file]
+
+	PID = subprocess.Popen(params, stdin=subprocess.PIPE,  
+									   stdout=subprocess.PIPE,  
+									   stderr=subprocess.PIPE)
 
 
-params = [batchRenderLocation]
-params += ['-rd', outputFramesLocation]
-params += ['-r', renderEngine]
-params += ['-s', str(startFrame)]
-params += ['-e', str(endFrame)]
-params += ['-log',logFile]
+	return PID
+	#subprocess.Popen.wait(PID)
+	#output, errors = PID.communicate()  
 
-params += [sceneLocation]
-print params
+	#print output
+	#print errors 
 
+def generateLog(logFileDirectory ):
 
-#-archive [file]
+	#this command get the ip adress host name
 
-PID = subprocess.Popen(params, stdin=subprocess.PIPE,  
-                                   stdout=subprocess.PIPE,  
-                                   stderr=subprocess.PIPE)
-PID.pid
+	
+	
+	hostName = socket.gethostname()
+	
+	dir = os.path.join (logFileDirectory, hostName)
+	
+	if os.listdir(dir) != []:
+		#search the log figure out what the currrent log number is and iterate by +1
 
-
-subprocess.Popen.wait(PID)
-output, errors = PID.communicate()  
-
-print output
-print errors 
-
-
-
-
-
-
-
+		highestVersionOfLog = checkMaxVersion(dir)
+		logFile = increment(highestVersionOfLog)
+		
+	if os.listdir(dir) == []:
+		#create the first file
+		logFile = dir + "\\" + "renderlog.00001.txt"
+		
+	
+	return logFile
 
 
 
@@ -234,6 +295,41 @@ def generateReport()
     
     return info
 
+currentVersion = checkCacheVersion(individualCharDir)
+
+cacheDir = individualCharDir + '/' + currentVersion	
+	
+	
+def increment(s):
+    """ look for the last sequence of number(s) in a string and increment 
+        This function is used to iterate versions of folders in the script
+    """
+    numbers = re.compile('\d+')
+    if numbers.findall(s):
+        lastoccr_sre = list(numbers.finditer(s))[-1]
+        lastoccr = lastoccr_sre.group()
+        lastoccr_incr = str(int(lastoccr) + 1)
+        if len(lastoccr) > len(lastoccr_incr):
+            lastoccr_incr = zfill(lastoccr_incr, len(lastoccr))
+        return s[:lastoccr_sre.start()]+lastoccr_incr+s[lastoccr_sre.end():]
+
+    return s
+
+def checkMaxVersion(dir):
+    
+    
+    versions =  os.listdir( dir )
+    if versions == []:
+        versions = ['Empty']      
+    currentHighestVersion = max(versions)
+    
+    return currentHighestVersion
+	
+	
+	
+	
+	
+	
 
 while True:
 
