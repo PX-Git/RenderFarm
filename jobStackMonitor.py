@@ -16,7 +16,7 @@ main features:
 
 
     #render que(renders that are ready to render- but no machine is free to render):
-    -listen for new commands and continuiously send render commands to free and available machines
+    -listen for new commands and continuously send render commands to free and available machines
     -log what render jobs are in the stack for server machines
     -maintain a priority for each job in the stack
     
@@ -57,8 +57,8 @@ def sentToFarm(job):
         '''do the messaging'''
         print job
 
-def interperateCommand(MESSAGE):
-        '''interperate the string message as a dictionary
+def interpretCommand(MESSAGE):
+        '''interpret the string message as a dictionary
         returns a dictionary
         '''
 
@@ -70,7 +70,7 @@ def interperateCommand(MESSAGE):
 def getStatus(ipAddress):
         #send a message asking for information
         #recieve a return message with status
-        #this command get the ip adress host name by the ip adress
+        #this command get the ip address host name by the ip address
 		hostName = socket.gethostbyaddr("10.0.0.15")[0]        
         status = "Ready"
         
@@ -122,9 +122,9 @@ def sendCommandToFarm(id,port,MESSAGE):
     #print type(MESSAGE)    
     #print MESSAGE
 
-    Adress=(id,port)
+    Address=(id,port)
     s = socket.socket()
-    s.connect(Adress)
+    s.connect(Address)
     s.send(MESSAGE)
     print "sent successfully"
     returnMessage = s.recv(1024)
@@ -138,12 +138,12 @@ def sendCommandToFarm(id,port,MESSAGE):
 
 def listen(port):
     #listen on designated port
-    Adress=('',port)
-    MaxClient=1
+    Address=('',port)
+    MaxClient = 1
     BUFFER_SIZE = 20 
-    print ("Waiting for Connection on port  ..." + str(Adress[1]))
+    print ("Waiting for Connection on port  ..." + str(Address[1]))
     s = socket.socket()
-    s.bind(Adress)
+    s.bind(Address)
     s.listen(MaxClient)
     clientSocket,incAddress = s.accept()
     print incAddress
@@ -187,11 +187,11 @@ while True:
         #MESSAGE = "{'priority': 50, 'outputFramesLocation': u'\\\\TITAN-PC\\Frames\\TestImages', 'endFrame': 10, 'commandType': 'Render', 'sceneLocation': u'\\\\TITAN-PC\\_Projects\\TestProject_Batch\\scenes\\testScene_001.ma', 'startFrame': 6, 'renderEngine': 'vray'}"
 
 
-        commandType = interperateCommand(MESSAGE)['commandType']
+        commandType = interpretCommand(MESSAGE)['commandType']
         print commandType
 
         if commandType == 'addToQue':
-                job = interperateCommand(MESSAGE)
+                job = interpretCommand(MESSAGE)
                 
                 job['id'] = currentJobId +1
                 #update the variable
@@ -205,7 +205,7 @@ while True:
                 
         if commandType == 'evaluateFarm':
                 
-                '''an evaluate farm command command wil be generated followin a render submiission - this is nessiscary to start the render procees once all of the info has been recieved and added to the render que'''
+                '''an evaluate farm command command will be generated following a render submission - this is neccesary to start the render procees once all of the info has been received and added to the render que'''
                 evaluateFarm()
 
                 
@@ -223,7 +223,7 @@ while True:
 
                 
         if commandType == 'Kill':
-                jobId = interperateCommand(MESSAGE)['id']
+                jobId = interpretCommand(MESSAGE)['id']
                 kill(jobId)
                 break
 
