@@ -79,8 +79,8 @@ def mainLoop():
 
 
     
-def interperateCommand(MESSAGE):
-        '''interperate the string message as a dictionary
+def interpretCommand(MESSAGE):
+        '''interpret the string message as a dictionary
         returns a dictionary
         '''
         value = ast.literal_eval(MESSAGE)
@@ -127,9 +127,9 @@ def render( batchRenderLocation, outputFramesLocation renderEngine startFrame en
 	#print output
 	#print errors 
 
-def generateLog(logFileDirectory ):
+def generateLog(logFileDirectory):
 
-	#this command get the ip adress host name
+	#this command get the ip address host name
 
 	
 	
@@ -239,10 +239,12 @@ def generateReport():
         info['status'] = "Ready"
     if status == "Rendering":
         jobName = getJobName()
-        -path to the maya render log
-        -the process id number associated with render currently running on the machine
-        -frame output directory
-        -start time and how long the render has been running
+        '''
+        - path to the maya render log
+        - the process id number associated with render currently running on the machine
+        - frame output directory
+        - start time and how long the render has been running
+        '''
 
 
     
@@ -269,7 +271,7 @@ def increment(s):
     return s
 
 def checkMaxVersion(dir):
-    
+    #check the highest version of the render log
     
     versions =  os.listdir( dir )
     if versions == []:
